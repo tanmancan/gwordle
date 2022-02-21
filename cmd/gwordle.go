@@ -42,6 +42,8 @@ func userInput(tries int, results *[]dictengine.ValidationResult) {
 	if (result.Match == false) {
 		tries = tries - 1
 		userInput(tries, results)
+	} else {
+		fmt.Printf("You have guessed the correct word, %s, in %v tries!\n", secret, tries)
 	}
 
 	if errResult != nil {
