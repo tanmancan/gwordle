@@ -1,19 +1,29 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
 	"github.com/tanmancan/gwordle/v1/internal/dictengine"
 )
 
-const maxTries int = 6
+// Maximum number of tries
+var MaxTries int
+
+// Worth length
+var WordLength int
 
 func main() {
 	var results []dictengine.ValidationResult
-	secret := dictengine.GetSecretWord(5)
-	fmt.Println("Word is: ", secret)
-	userInput(secret, maxTries, &results)
+	secret := dictengine.GetSecretWord(WordLength)
+	userInput(secret, MaxTries, &results)
+}
+
+func init() {
+	flag.IntVar(&MaxTries, "tries", 6, "Maximum number of tries. Default is 6.")
+	flag.IntVar(&WordLength, "wlen", 5, "The word length. Default is 5")
+	flag.Parse()
 }
 
 func userInput(secret string, tries int, results *[]dictengine.ValidationResult) {
@@ -21,6 +31,7 @@ func userInput(secret string, tries int, results *[]dictengine.ValidationResult)
 	tries = tries - 1
 	if (tries == 1) {
 		fmt.Println("You loose")
+		fmt.Println("Word is: ", secret)
 		os.Exit(0)
 	}
 
@@ -42,7 +53,7 @@ func userInput(secret string, tries int, results *[]dictengine.ValidationResult)
 	if (result.Match == false) {
 		userInput(secret, tries, results)
 	} else {
-		fmt.Printf("You have guessed the correct word: %s, in %v tries!\n", secret, maxTries - tries)
+		fmt.Printf("You have guessed the correct word: %s, in %v tries!\n", secret, MaxTries - tries)
 	}
 
 	if errResult != nil {

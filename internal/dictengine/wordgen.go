@@ -16,7 +16,6 @@ type WordList struct {
 
 // Get a random secret word matching the requested length.
 func GetSecretWord(length int) string {
-	fmt.Println("Length: ", length)
 	wordList := loadWordList()
 	words := wordList.words[length]
 	wordCount := len(words)
