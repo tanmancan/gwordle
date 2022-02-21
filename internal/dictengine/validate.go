@@ -76,7 +76,8 @@ func ValidateWord(guess string, secret string) (result ValidationResult, err err
 	result.Match = strings.Compare(guess, secret) == 0
 
 	if len(guess) != len(secret) {
-		return result, errors.New("The guess and secret words are not the same lenght")
+		err = errors.New("The guess and secret words are not the same length")
+		return result, err
 	}
 
 	guessWordMetadata := generateGuessWordMetadata(guess, secret)
@@ -105,6 +106,6 @@ func ValidateWord(guess string, secret string) (result ValidationResult, err err
 		})
 	}
 
-	return result, nil
+	return result, err
 }
 

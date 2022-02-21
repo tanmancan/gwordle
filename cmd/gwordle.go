@@ -26,14 +26,9 @@ func init() {
 	flag.Parse()
 }
 
+// Main game loop for the CLI application.
 func userInput(secret string, tries int, results *[]dictengine.ValidationResult) {
 	fmt.Printf("You have %d tries\n", tries)
-	tries = tries - 1
-	if (tries == 1) {
-		fmt.Println("You loose")
-		fmt.Println("Word is: ", secret)
-		os.Exit(0)
-	}
 
 	var guess string
 	_, err := fmt.Scanln(&guess)
@@ -44,6 +39,19 @@ func userInput(secret string, tries int, results *[]dictengine.ValidationResult)
 	}
 
 	result, errResult := dictengine.ValidateWord(guess, secret)
+
+	if errResult != nil {
+		fmt.Println(errResult)
+		userInput(secret, tries, results)
+	}
+
+	tries = tries - 1
+	if (tries == 1) {
+		fmt.Println("You loose")
+		fmt.Println("Word is: ", secret)
+		os.Exit(0)
+	}
+
 	*results = append(*results, result)
 
 	for _, r := range *results {
@@ -53,15 +61,18 @@ func userInput(secret string, tries int, results *[]dictengine.ValidationResult)
 	if (result.Match == false) {
 		userInput(secret, tries, results)
 	} else {
-		fmt.Printf("You have guessed the correct word: %s, in %v tries!\n", secret, MaxTries - tries)
+		triesLabel := "tries"
+		totalTries := MaxTries - tries
+		if (totalTries == 1) {
+			triesLabel = "try"
+		}
+		fmt.Printf("You have guessed the correct word: %s, in %v %s!\n", secret, totalTries, triesLabel)
+		os.Exit(0)
 	}
 
-	if errResult != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
 }
 
+// Output the results of the guess word.
 func displayValidation(result dictengine.ValidationResult) {
 	colorReset := "\033[0m"
 	colorGreen := "\033[32m"
