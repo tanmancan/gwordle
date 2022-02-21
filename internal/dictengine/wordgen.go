@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"math/rand"
-	"os"
-	"strings"
 	"time"
+
+	"github.com/tanmancan/gwordle/v1/internal/fhandler"
 )
 
 // Create a list of words grouped by their length.
@@ -26,23 +26,28 @@ func GetSecretWord(length int) string {
 	return word
 }
 
-// Load the wordlist seeder and parse the words in groups based on word length.
-func loadWordList() (wordList WordList) {
-	data, err := os.ReadFile("internal/dictengine/words_alpha.txt")
-	scanner := bufio.NewScanner(strings.NewReader(string(data)))
+
+// Parses a scanner generated from a word list file and returns a list of words
+func ParseWordList(scanner *bufio.Scanner) (wordList WordList) {
 	scanner.Split(bufio.ScanLines)
 	wordList.words = make(map[int][]string)
-
 	for scanner.Scan() {
 		word := scanner.Text()
 		length := len(word)
 		wordList.words[length] = append(wordList.words[length], word)
 	}
 
-	if (err != nil) {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	return wordList
+}
+
+// Load the wordlist seeder and parse the words in groups based on word length.
+func loadWordList() (wordList WordList) {
+	wordListPath := "internal/dictengine/words_alpha.txt"
+	reader := fhandler.WordListFileReader(wordListPath)
+	scanner := fhandler.WordListFileScanner(reader)
+
+	scanner.Split(bufio.ScanLines)
+	wordList = ParseWordList(scanner)
 
 	return wordList
 }
