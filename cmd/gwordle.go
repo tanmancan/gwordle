@@ -7,20 +7,22 @@ import (
 	"github.com/tanmancan/gwordle/v1/internal/dictengine"
 )
 
+const maxTries int = 6
+
 func main() {
-	var tries int = 5
 	var results []dictengine.ValidationResult
-	fmt.Printf("You have %d tries\n", tries)
-	userInput(tries, &results)
+	secret := dictengine.GetSecretWord(5)
+	fmt.Println("Word is: ", secret)
+	userInput(secret, maxTries, &results)
 }
 
-func userInput(tries int, results *[]dictengine.ValidationResult) {
-	if (tries == 0) {
+func userInput(secret string, tries int, results *[]dictengine.ValidationResult) {
+	fmt.Printf("You have %d tries\n", tries)
+	tries = tries - 1
+	if (tries == 1) {
 		fmt.Println("You loose")
 		os.Exit(0)
 	}
-
-	secret := "swill"
 
 	var guess string
 	_, err := fmt.Scanln(&guess)
@@ -30,20 +32,17 @@ func userInput(tries int, results *[]dictengine.ValidationResult) {
 		os.Exit(1)
 	}
 
-
 	result, errResult := dictengine.ValidateWord(guess, secret)
 	*results = append(*results, result)
 
-	fmt.Printf("You have %d tries\n", tries)
 	for _, r := range *results {
 		displayValidation(r)
 	}
 
 	if (result.Match == false) {
-		tries = tries - 1
-		userInput(tries, results)
+		userInput(secret, tries, results)
 	} else {
-		fmt.Printf("You have guessed the correct word, %s, in %v tries!\n", secret, tries)
+		fmt.Printf("You have guessed the correct word: %s, in %v tries!\n", secret, maxTries - tries)
 	}
 
 	if errResult != nil {
