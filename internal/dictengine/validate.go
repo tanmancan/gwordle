@@ -31,9 +31,9 @@ type ValidationResult struct {
 type GuessWordCharMetadata struct {
 	Char string
 	CountInGuess int // Number of times the character appears in the guess word.
-	IndexesInGuess []int // First instance of the character in the guess word. -1 if not found.
+	IndexesInGuess []int // First instance of the character in the guess word. Empty if not found.
 	CountInSecret int // Number of times the character appears in the secret word.
-	IndexesInSecret []int // First instance of the character in secret word. -1 if not found.
+	IndexesInSecret []int // First instance of the character in secret word. Empty slice if not found.
 }
 
 // Metadata about the guess word.
@@ -44,26 +44,31 @@ type GuessWordMetadata struct {
 // Generate useful metadata for each character in the guess word compared to the secret word
 func generateGuessWordMetadata(guess string, secret string) (metadata GuessWordMetadata) {
 	metadata.Chars = make(map[string]GuessWordCharMetadata)
-
 	guessChars := strings.Split(guess, "")
 	secretChars := strings.Split(secret, "")
 
 	for i, c := range guessChars {
-		var indexesInSecret []int
-		for idxCharSecret, charSecret := range secretChars {
-			if (c == charSecret) {
-				indexesInSecret = append(indexesInSecret, idxCharSecret)
+		metadataValue, metadataKey := metadata.Chars[c]
+		if !metadataKey  {
+			indexesInSecret := []int{}
+			for idxCharSecret, charSecret := range secretChars {
+				if (c == charSecret) {
+					indexesInSecret = append(indexesInSecret, idxCharSecret)
+				}
 			}
-		}
-		indexesInGuess := append(metadata.Chars[c].IndexesInGuess, i)
 
-		metadata.Chars[c] = GuessWordCharMetadata{
-			Char: c,
-			CountInGuess: strings.Count(guess, c),
-			IndexesInGuess: indexesInGuess,
-			CountInSecret: strings.Count(secret, c),
-			IndexesInSecret: indexesInSecret,
+			metadata.Chars[c] = GuessWordCharMetadata{
+				Char: c,
+				CountInGuess: strings.Count(guess, c),
+			  IndexesInGuess: []int{i},
+				CountInSecret: strings.Count(secret, c),
+				IndexesInSecret: indexesInSecret,
+			}
+		} else {
+			metadataValue.IndexesInGuess = append(metadataValue.IndexesInGuess, i)
+			metadata.Chars[c] = metadataValue
 		}
+
 	}
 
 	return metadata

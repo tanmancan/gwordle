@@ -9,6 +9,8 @@ import (
 	"github.com/tanmancan/gwordle/v1/internal/fhandler"
 )
 
+var WordListCache WordList
+
 // Create a list of words grouped by their length.
 type WordList struct {
 	words map[int][]string // The key value is the length of the words in the value.
