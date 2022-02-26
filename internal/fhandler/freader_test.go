@@ -2,6 +2,7 @@ package fhandler
 
 import (
 	"bufio"
+	"embed"
 	"fmt"
 	"reflect"
 	"strings"
@@ -53,26 +54,37 @@ func TestWordListFileScanner(t *testing.T) {
 	}
 }
 
+//go:embed static/test_words.txt
+var testFs embed.FS
 func TestWordListFileReader(t *testing.T) {
 	type args struct {
 		path string
+		fs embed.FS
 	}
 	tests := []struct {
 		name string
 		args args
 		want *strings.Reader
+		wantErr bool
 	}{
 		{
 			name: "Test file reader",
 			args: args{
-				path: "test_words.txt",
+				path: "static/test_words.txt",
+				fs: testFs,
 			},
 			want: strings.NewReader("testing\nvarious\nwords\nlist\n"),
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := WordListFileReader(tt.args.path); !reflect.DeepEqual(got, tt.want) {
+			got, err := WordListFileReader(tt.args.path, tt.args.fs);
+			if err != nil {
+				t.Errorf("WordListFileReader() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("WordListFileReader() = %v, want %v", got, tt.want)
 			}
 		})

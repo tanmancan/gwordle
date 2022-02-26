@@ -2,21 +2,19 @@ package fhandler
 
 import (
 	"bufio"
-	"fmt"
-	"os"
+	"embed"
 	"strings"
 )
 
 // Get a strings.Reader for the provided text file path
-func WordListFileReader(path string) *strings.Reader {
-	data, err := os.ReadFile(path)
+func WordListFileReader(path string, fs embed.FS) (*strings.Reader, error) {
+	data, err := fs.ReadFile(path)
 
 	if (err != nil) {
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, err
 	}
 
-	return strings.NewReader(string(data))
+	return strings.NewReader(string(data)), nil
 }
 
 // Generate a Scanner from the provided strings.Reader
