@@ -1,29 +1,18 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
+	"github.com/tanmancan/gwordle/v1/internal/config"
 	"github.com/tanmancan/gwordle/v1/internal/dictengine"
+	_ "github.com/tanmancan/gwordle/v1/internal/wloader"
 )
-
-// Maximum number of tries
-var MaxTries int
-
-// Worth length
-var WordLength int
 
 func main() {
 	var results []dictengine.ValidationResult
-	secret := dictengine.GetSecretWord(WordLength)
-	userInput(secret, MaxTries, &results)
-}
-
-func init() {
-	flag.IntVar(&MaxTries, "tries", 6, "Maximum number of tries. Default is 6.")
-	flag.IntVar(&WordLength, "wlen", 5, "The word length. Default is 5")
-	flag.Parse()
+	secret := dictengine.WordListCache.GetRandomWord(config.GlobalConfig.UserConfig.WordLength)
+	userInput(secret, config.GlobalConfig.UserConfig.MaxTries, &results)
 }
 
 // Main game loop for the CLI application.
@@ -62,7 +51,7 @@ func userInput(secret string, tries int, results *[]dictengine.ValidationResult)
 		userInput(secret, tries, results)
 	} else {
 		triesLabel := "tries"
-		totalTries := MaxTries - tries
+		totalTries := config.GlobalConfig.UserConfig.MaxTries - tries
 		if (totalTries == 1) {
 			triesLabel = "try"
 		}

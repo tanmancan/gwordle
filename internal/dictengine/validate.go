@@ -36,6 +36,12 @@ type GuessWordCharMetadata struct {
 	IndexesInSecret []int // First instance of the character in secret word. Empty slice if not found.
 }
 
+// Adds a new index to the IndexesInGuess list
+func (cm *GuessWordCharMetadata) SetIndexInGuess(index int) *GuessWordCharMetadata {
+	cm.IndexesInGuess = append(cm.IndexesInGuess, index)
+	return cm
+}
+
 // Metadata about the guess word.
 type GuessWordMetadata struct {
 	Chars map[string]GuessWordCharMetadata
@@ -65,7 +71,7 @@ func generateGuessWordMetadata(guess string, secret string) (metadata GuessWordM
 				IndexesInSecret: indexesInSecret,
 			}
 		} else {
-			metadataValue.IndexesInGuess = append(metadataValue.IndexesInGuess, i)
+			metadataValue.SetIndexInGuess(i)
 			metadata.Chars[c] = metadataValue
 		}
 
