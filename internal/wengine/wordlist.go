@@ -1,4 +1,4 @@
-package dictengine
+package wengine
 
 import (
 	"encoding/json"
@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/tanmancan/gwordle/v1/internal/config"
-	"github.com/tanmancan/gwordle/v1/internal/fhandler"
 )
 
 // Create a list of words grouped by their length.
@@ -56,8 +55,8 @@ func (wl *WordList) GetRandomWord(length int) string {
 	valid := wl.CheckDictionary(word)
 
 	if (!valid) {
-		invalidPath := fmt.Sprintf("internal/wloader/static/%s/invalid", config.GlobalConfig.Language.String())
-		fhandler.WordListFileWriter(invalidPath, word)
+		invalidPath := fmt.Sprintf("internal/wengine/static/%s/invalid", config.GlobalConfig.Locale.String())
+		WordListFileWriter(invalidPath, word)
 	}
 
 	return word

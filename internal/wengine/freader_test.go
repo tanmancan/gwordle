@@ -1,4 +1,4 @@
-package fhandler
+package wengine
 
 import (
 	"bufio"
@@ -54,8 +54,8 @@ func TestWordListFileScanner(t *testing.T) {
 	}
 }
 
-//go:embed static/test_words.txt
-var testFs embed.FS
+//go:embed test-mocks/test_words.txt
+var testFsFreader embed.FS
 func TestWordListFileReader(t *testing.T) {
 	type args struct {
 		path string
@@ -70,8 +70,8 @@ func TestWordListFileReader(t *testing.T) {
 		{
 			name: "Test file reader",
 			args: args{
-				path: "static/test_words.txt",
-				fs: testFs,
+				path: "test-mocks/test_words.txt",
+				fs: testFsFreader,
 			},
 			want: strings.NewReader("testing\nvarious\nwords\nlist\n"),
 			wantErr: false,

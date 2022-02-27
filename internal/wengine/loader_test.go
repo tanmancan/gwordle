@@ -1,33 +1,36 @@
-package wloader
+package wengine
 
 import (
 	"embed"
 	"reflect"
 	"testing"
 
-	"github.com/tanmancan/gwordle/v1/internal/dictengine"
+	"golang.org/x/text/language"
 )
 
-//go:embed static/*
-var testFs embed.FS
+//go:embed test-mocks
+var testFsLoader embed.FS
 
 func Test_loadWordList(t *testing.T) {
 	type args struct {
-		language string
-		fs       embed.FS
+		wfs WordFileSystem
 	}
 	tests := []struct {
 		name         string
 		args         args
-		wantWordList dictengine.WordList
+		wantWordList WordList
 	}{
 		{
 			name: "Test word loader",
 			args: args{
-				language: "test",
-				fs: testFs,
+				wfs: WordFileSystem{
+					fs: testFsLoader,
+					validFilePathTemplate: "test-mocks/%s/valid",
+					invalidFilePathTemplate: "test-mocks/%s/invalid",
+					locale: language.English,
+				},
 			},
-			wantWordList: dictengine.WordList{
+			wantWordList: WordList{
 				Words: map[int][]string{
 					2: {
 						"hi",
@@ -48,7 +51,7 @@ func Test_loadWordList(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotWordList := loadWordList(tt.args.language, tt.args.fs); !reflect.DeepEqual(gotWordList, tt.wantWordList) {
+			if gotWordList := loadWordList(tt.args.wfs); !reflect.DeepEqual(gotWordList, tt.wantWordList) {
 				t.Errorf("loadWordList() = %v, want %v", gotWordList, tt.wantWordList)
 			}
 		})

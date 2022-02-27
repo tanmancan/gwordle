@@ -5,18 +5,17 @@ import (
 	"os"
 
 	"github.com/tanmancan/gwordle/v1/internal/config"
-	"github.com/tanmancan/gwordle/v1/internal/dictengine"
-	_ "github.com/tanmancan/gwordle/v1/internal/wloader"
+	"github.com/tanmancan/gwordle/v1/internal/wengine"
 )
 
 func main() {
-	var results []dictengine.ValidationResult
-	secret := dictengine.WordListCache.GetRandomWord(config.GlobalConfig.UserConfig.WordLength)
+	var results []wengine.ValidationResult
+	secret := wengine.WordListCache.GetRandomWord(config.GlobalConfig.UserConfig.WordLength)
 	userInput(secret, config.GlobalConfig.UserConfig.MaxTries, &results)
 }
 
 // Main game loop for the CLI application.
-func userInput(secret string, tries int, results *[]dictengine.ValidationResult) {
+func userInput(secret string, tries int, results *[]wengine.ValidationResult) {
 	fmt.Printf("You have %d tries\n", tries)
 
 	var guess string
@@ -27,7 +26,7 @@ func userInput(secret string, tries int, results *[]dictengine.ValidationResult)
 		os.Exit(1)
 	}
 
-	result, errResult := dictengine.ValidateWord(guess, secret)
+	result, errResult := wengine.ValidateWord(guess, secret)
 
 	if errResult != nil {
 		fmt.Println(errResult)
@@ -62,7 +61,7 @@ func userInput(secret string, tries int, results *[]dictengine.ValidationResult)
 }
 
 // Output the results of the guess word.
-func displayValidation(result dictengine.ValidationResult) {
+func displayValidation(result wengine.ValidationResult) {
 	colorReset := "\033[0m"
 	colorGreen := "\033[32m"
 	colorYellow := "\033[33m"
@@ -73,11 +72,11 @@ func displayValidation(result dictengine.ValidationResult) {
 		status := c.Status
 
 		switch status {
-		case dictengine.InvalidCharacter:
+		case wengine.InvalidCharacter:
 			color = colorReset
-		case dictengine.InvalidPosition:
+		case wengine.InvalidPosition:
 			color = colorYellow
-		case dictengine.ValidPosition:
+		case wengine.ValidPosition:
 			color = colorGreen
 		}
 

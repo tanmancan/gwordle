@@ -7,7 +7,7 @@ import (
 )
 
 type AppConfig struct {
-	Language language.Tag
+	Locale language.Tag
 	UserConfig UserConfig
 }
 
@@ -19,7 +19,7 @@ type UserConfig struct {
 var GlobalConfig AppConfig
 
 func init() {
-	GlobalConfig.Language = language.English
+	GlobalConfig.Locale = language.English
 
 	flag.IntVar(&GlobalConfig.UserConfig.MaxTries, "tries", 6, "Maximum number of tries. Default is 6.")
 	flag.IntVar(&GlobalConfig.UserConfig.WordLength, "wlen", 5, "The word length. Default is 5")

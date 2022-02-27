@@ -1,4 +1,4 @@
-package dictengine
+package wengine
 
 import (
 	"errors"
