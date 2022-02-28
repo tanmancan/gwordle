@@ -24,7 +24,7 @@ func TestValidateWord(t *testing.T) {
 			},
 			wantResult: ValidationResult{
 				Match: false,
-				Chars: []CharacterValidationResult{
+				Chars: []CharValidationResult{
 					{
 						Char:   "l",
 						Status: InvalidPosition,
@@ -57,7 +57,7 @@ func TestValidateWord(t *testing.T) {
 			},
 			wantResult: ValidationResult{
 				Match: false,
-				Chars: []CharacterValidationResult{
+				Chars: []CharValidationResult{
 					{
 						Char:   "x",
 						Status: InvalidCharacter,
@@ -90,7 +90,7 @@ func TestValidateWord(t *testing.T) {
 			},
 			wantResult: ValidationResult{
 				Match: false,
-				Chars: []CharacterValidationResult{
+				Chars: []CharValidationResult{
 					{
 						Char:   "x",
 						Status: InvalidCharacter,
@@ -123,7 +123,7 @@ func TestValidateWord(t *testing.T) {
 			},
 			wantResult: ValidationResult{
 				Match: false,
-				Chars: []CharacterValidationResult{
+				Chars: []CharValidationResult{
 					{
 						Char:   "x",
 						Status: InvalidCharacter,
@@ -156,7 +156,7 @@ func TestValidateWord(t *testing.T) {
 			},
 			wantResult: ValidationResult{
 				Match: false,
-				Chars: []CharacterValidationResult{
+				Chars: []CharValidationResult{
 					{
 						Char:   "w",
 						Status: InvalidPosition,
@@ -189,7 +189,7 @@ func TestValidateWord(t *testing.T) {
 			},
 			wantResult: ValidationResult{
 				Match: false,
-				Chars: []CharacterValidationResult{
+				Chars: []CharValidationResult{
 					{
 						Char:   "n",
 						Status: InvalidCharacter,
@@ -214,6 +214,55 @@ func TestValidateWord(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "Guess word: nnnnn. Secret word: reccuring",
+			args: args{
+				guess:  "ccccccick",
+				secret: "reccuring",
+			},
+			wantResult: ValidationResult{
+				Match: false,
+				Chars: []CharValidationResult{
+					{
+						Char:   "c",
+						Status: InvalidCharacter,
+					},
+					{
+						Char:   "c",
+						Status: InvalidCharacter,
+					},
+					{
+						Char:   "c",
+						Status: ValidPosition,
+					},
+					{
+						Char:   "c",
+						Status: ValidPosition,
+					},
+					{
+						Char:   "c",
+						Status: InvalidCharacter,
+					},
+					{
+						Char:   "c",
+						Status: InvalidCharacter,
+					},
+					{
+						Char:   "i",
+						Status: ValidPosition,
+					},
+					{
+						Char:   "c",
+						Status: InvalidCharacter,
+					},
+					{
+						Char:   "k",
+						Status: InvalidCharacter,
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -229,13 +278,13 @@ func TestValidateWord(t *testing.T) {
 	}
 }
 
-func Test_generateGuessWordMetadata(t *testing.T) {
+func Test_generateWordMetadata(t *testing.T) {
 	type args struct {
 		guess  string
 		secret string
 	}
-	wantChar := make(map[string]GuessWordCharMetadata)
-	wantChar["w"] = GuessWordCharMetadata{
+	wantChar := make(map[string]CharMetadata)
+	wantChar["w"] = CharMetadata{
 		Char:                "w",
 		CountInGuess:        1,
 		CountInSecret:       1,
@@ -244,7 +293,7 @@ func Test_generateGuessWordMetadata(t *testing.T) {
 		IndexesValidGuess:   nil,
 		IndexesInvalidGuess: []int{0},
 	}
-	wantChar["x"] = GuessWordCharMetadata{
+	wantChar["x"] = CharMetadata{
 		Char:                "x",
 		CountInGuess:        4,
 		CountInSecret:       0,
@@ -256,7 +305,7 @@ func Test_generateGuessWordMetadata(t *testing.T) {
 	tests := []struct {
 		name         string
 		args         args
-		wantMetadata GuessWordMetadata
+		wantMetadata WordMetadata
 	}{
 		{
 			name: "Genrate metadata",
@@ -264,23 +313,23 @@ func Test_generateGuessWordMetadata(t *testing.T) {
 				guess:  "wxxxx",
 				secret: "swill",
 			},
-			wantMetadata: GuessWordMetadata{
+			wantMetadata: WordMetadata{
 				Chars: wantChar,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var gotMetadata GuessWordMetadata
-			gotMetadata.GenerateGuessWordMetadata(tt.args.guess, tt.args.secret)
+			var gotMetadata WordMetadata
+			gotMetadata.GenerateWordMetadata(tt.args.guess, tt.args.secret)
 			if !reflect.DeepEqual(gotMetadata, tt.wantMetadata) {
-				t.Errorf("generateGuessWordMetadata() = %v, want %v", gotMetadata, tt.wantMetadata)
+				t.Errorf("generateWordMetadata() = %v, want %v", gotMetadata, tt.wantMetadata)
 			}
 		})
 	}
 }
 
-func TestGuessWordCharMetadata_FoundAllSecretChar(t *testing.T) {
+func TestCharMetadata_FoundAllSecretChar(t *testing.T) {
 	type fields struct {
 		Char                string
 		CountInGuess        int
@@ -350,7 +399,7 @@ func TestGuessWordCharMetadata_FoundAllSecretChar(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cm := &GuessWordCharMetadata{
+			cm := &CharMetadata{
 				Char:                tt.fields.Char,
 				CountInGuess:        tt.fields.CountInGuess,
 				CountInSecret:       tt.fields.CountInSecret,
@@ -360,7 +409,7 @@ func TestGuessWordCharMetadata_FoundAllSecretChar(t *testing.T) {
 				IndexesInvalidGuess: tt.fields.IndexesInvalidGuess,
 			}
 			if got := cm.FoundAllSecretChar(); got != tt.want {
-				t.Errorf("GuessWordCharMetadata.FoundAllSecretChar() = %v, want %v", got, tt.want)
+				t.Errorf("CharMetadata.FoundAllSecretChar() = %v, want %v", got, tt.want)
 			}
 		})
 	}

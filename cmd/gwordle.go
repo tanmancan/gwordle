@@ -26,6 +26,11 @@ func userInput(secret string, tries int, results *[]wengine.ValidationResult) {
 		os.Exit(1)
 	}
 
+	if !wengine.WordListCache.HasWord(guess) {
+		fmt.Println("Invalid guess word.")
+		userInput(secret, tries, results)
+	}
+
 	result, errResult := wengine.ValidateWord(guess, secret)
 
 	if errResult != nil {
