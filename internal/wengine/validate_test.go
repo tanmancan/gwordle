@@ -181,6 +181,39 @@ func TestValidateWord(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "Guess word: nnnnn. Secret word: glint",
+			args: args{
+				guess:  "nnnnn",
+				secret: "glint",
+			},
+			wantResult: ValidationResult{
+				Match: false,
+				Chars: []CharacterValidationResult{
+					{
+						Char:   "n",
+						Status: InvalidCharacter,
+					},
+					{
+						Char:   "n",
+						Status: InvalidCharacter,
+					},
+					{
+						Char:   "n",
+						Status: InvalidCharacter,
+					},
+					{
+						Char:   "n",
+						Status: ValidPosition,
+					},
+					{
+						Char:   "n",
+						Status: InvalidCharacter,
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -203,18 +236,22 @@ func Test_generateGuessWordMetadata(t *testing.T) {
 	}
 	wantChar := make(map[string]GuessWordCharMetadata)
 	wantChar["w"] = GuessWordCharMetadata{
-		Char: "w",
-		CountInGuess: 1,
-		IndexesInGuess: []int{0},
-		CountInSecret: 1,
-		IndexesInSecret: []int{1},
+		Char:                "w",
+		CountInGuess:        1,
+		CountInSecret:       1,
+		IndexesInGuess:      []int{0},
+		IndexesInSecret:     []int{1},
+		IndexesValidGuess:   nil,
+		IndexesInvalidGuess: []int{0},
 	}
 	wantChar["x"] = GuessWordCharMetadata{
-		Char: "x",
-		CountInGuess: 4,
-		IndexesInGuess: []int{1,2,3,4},
-		CountInSecret: 0,
-		IndexesInSecret: []int{},
+		Char:                "x",
+		CountInGuess:        4,
+		CountInSecret:       0,
+		IndexesInGuess:      []int{1, 2, 3, 4},
+		IndexesInSecret:     nil,
+		IndexesValidGuess:   nil,
+		IndexesInvalidGuess: nil,
 	}
 	tests := []struct {
 		name         string
@@ -224,7 +261,7 @@ func Test_generateGuessWordMetadata(t *testing.T) {
 		{
 			name: "Genrate metadata",
 			args: args{
-				guess: "wxxxx",
+				guess:  "wxxxx",
 				secret: "swill",
 			},
 			wantMetadata: GuessWordMetadata{
@@ -234,8 +271,96 @@ func Test_generateGuessWordMetadata(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotMetadata := generateGuessWordMetadata(tt.args.guess, tt.args.secret); !reflect.DeepEqual(gotMetadata, tt.wantMetadata) {
+			var gotMetadata GuessWordMetadata
+			gotMetadata.GenerateGuessWordMetadata(tt.args.guess, tt.args.secret)
+			if !reflect.DeepEqual(gotMetadata, tt.wantMetadata) {
 				t.Errorf("generateGuessWordMetadata() = %v, want %v", gotMetadata, tt.wantMetadata)
+			}
+		})
+	}
+}
+
+func TestGuessWordCharMetadata_FoundAllSecretChar(t *testing.T) {
+	type fields struct {
+		Char                string
+		CountInGuess        int
+		CountInSecret       int
+		IndexesInGuess      []int
+		IndexesInSecret     []int
+		IndexesValidGuess   []int
+		IndexesInvalidGuess []int
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			name: "Returns true",
+			fields: fields{
+				Char: "x",
+				CountInGuess: 2,
+				CountInSecret: 2,
+				IndexesInGuess: []int{0, 1},
+				IndexesInSecret: []int{0, 1},
+				IndexesValidGuess: []int{0, 1},
+				IndexesInvalidGuess: nil,
+			},
+			want: true,
+		},
+		{
+			name: "Returns true",
+			fields: fields{
+				Char: "x",
+				CountInGuess: 4,
+				CountInSecret: 2,
+				IndexesInGuess: []int{0, 1, 4, 7},
+				IndexesInSecret: []int{4, 7},
+				IndexesValidGuess: []int{4, 7},
+				IndexesInvalidGuess: nil,
+			},
+			want: true,
+		},
+		{
+			name: "Returns false",
+			fields: fields{
+				Char: "x",
+				CountInGuess: 2,
+				CountInSecret: 2,
+				IndexesInGuess: []int{0, 1},
+				IndexesInSecret: []int{2, 3},
+				IndexesValidGuess: []int{0, 1},
+				IndexesInvalidGuess: nil,
+			},
+			want: false,
+		},
+		{
+			name: "Returns false",
+			fields: fields{
+				Char: "x",
+				CountInGuess: 4,
+				CountInSecret: 3,
+				IndexesInGuess: []int{0, 1, 4, 7},
+				IndexesInSecret: []int{4, 7, 8},
+				IndexesValidGuess: []int{4, 7},
+				IndexesInvalidGuess: nil,
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cm := &GuessWordCharMetadata{
+				Char:                tt.fields.Char,
+				CountInGuess:        tt.fields.CountInGuess,
+				CountInSecret:       tt.fields.CountInSecret,
+				IndexesInGuess:      tt.fields.IndexesInGuess,
+				IndexesInSecret:     tt.fields.IndexesInSecret,
+				IndexesValidGuess:   tt.fields.IndexesValidGuess,
+				IndexesInvalidGuess: tt.fields.IndexesInvalidGuess,
+			}
+			if got := cm.FoundAllSecretChar(); got != tt.want {
+				t.Errorf("GuessWordCharMetadata.FoundAllSecretChar() = %v, want %v", got, tt.want)
 			}
 		})
 	}
