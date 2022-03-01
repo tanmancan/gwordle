@@ -38,7 +38,7 @@ type DictionaryApiResponseError struct {
 	Resolution string
 }
 
-
+// Build a request for api.dictionaryapi.dev for the provided word.
 func buildDictionaryRequest(word string) (*http.Request) {
 	endpoint := fmt.Sprintf("https://api.dictionaryapi.dev/api/v2/entries/en/%s", word)
 	request, err := http.NewRequest("GET", endpoint, nil)
@@ -50,6 +50,7 @@ func buildDictionaryRequest(word string) (*http.Request) {
 	return request
 }
 
+// Parse the response from api.dictionaryapi.dev
 func parseDictionaryResponse(response *http.Response) (apiResponse DictionaryApiResponse) {
 	body, err := ioutil.ReadAll(response.Body)
 
@@ -67,6 +68,7 @@ func parseDictionaryResponse(response *http.Response) (apiResponse DictionaryApi
 	return apiResponse
 }
 
+// Get the definition for the provided word using api.dictionaryapi.dev
 func getWordDefinition(word string) DictionaryApiResponse {
 	request := buildDictionaryRequest(word)
 	client := http.Client{}

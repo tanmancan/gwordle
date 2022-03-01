@@ -13,6 +13,7 @@ import (
 // Create a list of words grouped by their length.
 type WordList struct {
 	Words map[int][]string // The key value is the length of the words in the value.
+	Definitions map[string]DictionaryApiDefinition
 }
 
 var WordListCache WordList
@@ -50,20 +51,41 @@ func (wl *WordList) HasWord(word string) bool {
 	return searchIdx < len(words) && words[searchIdx] == word
 }
 
-// Uses dictionaryapi.dev to see if the provided word is valid.
-func (wl *WordList) CheckDictionary(word string) bool {
+// Returns a cached definition for the given word. If no cache found, fetches and caches the definition first.
+func (wl *WordList) GetDefinition(word string) (DictionaryApiDefinition) {
+	if def, cached := wl.Definitions[word]; cached {
+		return def
+	}
+
 	apiResponse := getWordDefinition(word)
+
 	if (apiResponse.Error != DictionaryApiResponseError{}) {
 		fmt.Println(apiResponse.Error)
+		return nil
+	}
+
+	wl.Definitions[word] = apiResponse.Response[0]
+	return wl.Definitions[word]
+}
+
+// Uses dictionaryapi.dev to see if the provided word is valid.
+func (wl *WordList) CheckDictionary(word string) bool {
+	definition := wl.GetDefinition(word)
+
+	if (definition == DictionaryApiDefinition{}) {
 		return false
 	}
 
+	return true
+}
+
+// Output the definition to the console
+func (wl *WordList) ShowDefinition(word string) bool {
+	definition := wl.GetDefinition(word)
 	fmt.Printf(
 		"%s (%s): %s\n",
-		apiResponse.Response[0].Word,
-		apiResponse.Response[0].Meanings[0].PartOfSpeech,
-		apiResponse.Response[0].Meanings[0].Definitions[0].Definition,
+		definition.Word,
+		definition.Meanings[0].PartOfSpeech,
+		definition.Meanings[0].Definitions[0].Definition,
 	)
-
-	return true
 }
