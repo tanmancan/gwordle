@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/tanmancan/gwordle/v1/internal/config"
 	"golang.org/x/text/language"
@@ -54,13 +55,15 @@ func scanWordListFile(scannerValidList *bufio.Scanner, scannerInvalidList *bufio
 	scannerInvalidList.Split(bufio.ScanLines)
 
 	for scannerInvalidList.Scan() {
-		invalidWordList = append(invalidWordList, scannerInvalidList.Text())
+		wiv := strings.Trim(scannerInvalidList.Text(), " ")
+		invalidWordList = append(invalidWordList, wiv)
 	}
 
 	sort.Strings(invalidWordList)
 
 	for scannerValidList.Scan() {
-		validWordList = append(validWordList, scannerValidList.Text())
+		wv := strings.Trim(scannerValidList.Text(), " ")
+		validWordList = append(validWordList, wv)
 	}
 
 	sort.Strings(validWordList)
