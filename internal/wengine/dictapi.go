@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/tanmancan/gwordle/v1/internal/config"
 )
 
 // Response from api.dictionaryapi.dev
@@ -14,21 +16,21 @@ type DictionaryApiResponse struct {
 	Error DictionaryApiResponseError
 }
 
+type WordDefinitions struct {
+	Definition string
+	Example string
+}
+
+type WordMeanings struct {
+	PartOfSpeech string
+	Definitions []WordDefinitions
+}
+
 type DictionaryApiDefinition struct {
 	Word string
 	Phonetic string
-	Phoenetics []struct {
-		Text string
-		Audio string
-	}
 	Origin string
-	Meanings []struct {
-		PartOfSpeech string
-		Definitions []struct {
-			Definition string
-			Example string
-		}
-	}
+	Meanings []WordMeanings
 }
 
 // An error response from api.dictionaryapi.dev
@@ -38,9 +40,10 @@ type DictionaryApiResponseError struct {
 	Resolution string
 }
 
+
 // Build a request for api.dictionaryapi.dev for the provided word.
 func buildDictionaryRequest(word string) (*http.Request) {
-	endpoint := fmt.Sprintf("https://api.dictionaryapi.dev/api/v2/entries/en/%s", word)
+	endpoint := fmt.Sprintf(config.GlobalConfig.DictionaryApiEndpoint, word)
 	request, err := http.NewRequest("GET", endpoint, nil)
 
 	if err != nil {
@@ -63,14 +66,20 @@ func parseDictionaryResponse(response *http.Response) (apiResponse DictionaryApi
 		json.Unmarshal(body, &apiResponse.Response)
 	case 404:
 		json.Unmarshal(body, &apiResponse.Error)
+	default:
+		apiResponse.Error = DictionaryApiResponseError{
+			Title: "Unknown error while fetching definition.",
+			Message: fmt.Sprintf("Status: %s - %s", response.Status, string(body)),
+			Resolution: "Check https://github.com/meetDeveloper/freeDictionaryAPI/issues for any service issues.",
+		}
+
 	}
 
 	return apiResponse
 }
 
 // Get the definition for the provided word using api.dictionaryapi.dev
-func getWordDefinition(word string) DictionaryApiResponse {
-	request := buildDictionaryRequest(word)
+func getWordDefinition(request *http.Request) DictionaryApiResponse {
 	client := http.Client{}
 	response, err := client.Do(request)
 

@@ -13,7 +13,8 @@ import (
 // Create a list of words grouped by their length.
 type WordList struct {
 	Words map[int][]string // The key value is the length of the words in the value.
-	Definitions map[string]DictionaryApiDefinition
+	Definitions map[string]DictionaryApiDefinition // Stores the definition for a word using api.dictionaryapi.dev
+	CompletedWords []string
 }
 
 var WordListCache WordList
@@ -24,18 +25,24 @@ func (wl *WordList) GetRandomWord(length int) string {
 		log.Fatalln("No words were loaded")
 	}
 	words := wl.Words[length]
+
+	if words == nil {
+		log.Fatalln("No word found for given length:", length)
+	}
+
 	wordCount := len(words)
 
-	rand.Seed(time.Now().UnixMilli())
-	randomIdx := rand.Intn(wordCount)
+	rand.Seed(time.Now().Unix())
+	randomIdx := rand.Intn(wordCount - 1)
 	word := words[randomIdx]
-	// @todo Remove after Debugging.
-	fmt.Println(wordCount, randomIdx, word)
+
 	valid := wl.CheckDictionary(word)
 
 	if (!valid) {
 		invalidPath := fmt.Sprintf("internal/wengine/static/%s/invalid", config.GlobalConfig.Locale.String())
 		WordListFileWriter(invalidPath, word)
+	} else {
+		// wl.ShowDefinition(word)
 	}
 
 	return word
@@ -46,33 +53,43 @@ func (wl *WordList) HasWord(word string) bool {
 	length := len(word)
 	words := wl.Words[length]
 
+	sort.Strings(words)
 	searchIdx := sort.SearchStrings(words, word)
 
 	return searchIdx < len(words) && words[searchIdx] == word
 }
 
+// func (wl *WordList) AddCompletedWord(word string) {
+// 	existingIdx := sort.SearchStrings(wl.CompletedWords, word)
+// }
+
 // Returns a cached definition for the given word. If no cache found, fetches and caches the definition first.
-func (wl *WordList) GetDefinition(word string) (DictionaryApiDefinition) {
+func (wl *WordList) GetDefinition(word string) (*DictionaryApiDefinition) {
 	if def, cached := wl.Definitions[word]; cached {
-		return def
+		return &def
 	}
 
-	apiResponse := getWordDefinition(word)
+	request := buildDictionaryRequest(word)
+	apiResponse := getWordDefinition(request)
 
 	if (apiResponse.Error != DictionaryApiResponseError{}) {
 		fmt.Println(apiResponse.Error)
 		return nil
 	}
 
-	wl.Definitions[word] = apiResponse.Response[0]
-	return wl.Definitions[word]
+	if wl.Definitions == nil {
+		wl.Definitions = make(map[string]DictionaryApiDefinition)
+	}
+	def := apiResponse.Response[0]
+	wl.Definitions[word] = def
+	return &def
 }
 
 // Uses dictionaryapi.dev to see if the provided word is valid.
 func (wl *WordList) CheckDictionary(word string) bool {
 	definition := wl.GetDefinition(word)
 
-	if (definition == DictionaryApiDefinition{}) {
+	if (definition == nil) {
 		return false
 	}
 
@@ -80,8 +97,12 @@ func (wl *WordList) CheckDictionary(word string) bool {
 }
 
 // Output the definition to the console
-func (wl *WordList) ShowDefinition(word string) bool {
+func (wl *WordList) ShowDefinition(word string) {
 	definition := wl.GetDefinition(word)
+
+	if (definition == nil) {
+		fmt.Println("No definition found for the word:", word)
+	}
 	fmt.Printf(
 		"%s (%s): %s\n",
 		definition.Word,
