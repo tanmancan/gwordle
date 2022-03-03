@@ -1,4 +1,4 @@
-package wengine
+package dictionaryapi
 
 import (
 	_ "embed"
@@ -16,7 +16,7 @@ var mockSuccessResponse string
 //go:embed test-mocks/dictionaryapimocks/error-response.json
 var mockErrorResponse string
 
-func Test_getWordDefinition(t *testing.T) {
+func Test_GetWordDefinition(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func (w http.ResponseWriter, r *http.Request)  {
 		fmt.Fprintln(w, string(mockSuccessResponse))
 	}))
@@ -79,14 +79,14 @@ func Test_getWordDefinition(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getWordDefinition(tt.args.request); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getWordDefinition() = %v, want %v", got, tt.want)
+			if got := GetWordDefinition(tt.args.request); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetWordDefinition() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_getWordDefinition_errorResponse_statusNotFound(t *testing.T) {
+func Test_GetWordDefinition_errorResponse_statusNotFound(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func (w http.ResponseWriter, r *http.Request)  {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintln(w, string(mockErrorResponse))
@@ -120,14 +120,14 @@ func Test_getWordDefinition_errorResponse_statusNotFound(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getWordDefinition(tt.args.request); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getWordDefinition() = %v, want %v", got, tt.want)
+			if got := GetWordDefinition(tt.args.request); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetWordDefinition() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_getWordDefinition_errorResponse_statusUnknown(t *testing.T) {
+func Test_GetWordDefinition_errorResponse_statusUnknown(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func (w http.ResponseWriter, r *http.Request)  {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, "Oops!")
@@ -161,8 +161,8 @@ func Test_getWordDefinition_errorResponse_statusUnknown(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getWordDefinition(tt.args.request); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getWordDefinition() = %v, want %v", got, tt.want)
+			if got := GetWordDefinition(tt.args.request); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetWordDefinition() = %v, want %v", got, tt.want)
 			}
 		})
 	}

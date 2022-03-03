@@ -1,4 +1,4 @@
-package wengine
+package dictionaryapi
 
 import (
 	"encoding/json"
@@ -42,7 +42,7 @@ type DictionaryApiResponseError struct {
 
 
 // Build a request for api.dictionaryapi.dev for the provided word.
-func buildDictionaryRequest(word string) (*http.Request) {
+func BuildDictionaryRequest(word string) (*http.Request) {
 	endpoint := fmt.Sprintf(config.GlobalConfig.DictionaryApiEndpoint, word)
 	request, err := http.NewRequest("GET", endpoint, nil)
 
@@ -79,7 +79,7 @@ func parseDictionaryResponse(response *http.Response) (apiResponse DictionaryApi
 }
 
 // Get the definition for the provided word using api.dictionaryapi.dev
-func getWordDefinition(request *http.Request) DictionaryApiResponse {
+func GetWordDefinition(request *http.Request) DictionaryApiResponse {
 	client := http.Client{}
 	response, err := client.Do(request)
 
