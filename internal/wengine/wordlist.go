@@ -32,7 +32,7 @@ func (wl *WordList) GetRandomWord(length int) string {
 		log.Fatalln("No word found for given length:", length)
 	}
 
-	words := wl.ApplyWordFilters(wordsPreFilter)
+	words := wl.FilterWordList(wordsPreFilter)
 	wl.Words[length] = words
 	wordCount := len(words)
 
@@ -67,9 +67,30 @@ func (wl *WordList) HasWord(word string) bool {
 	return searchIdx < len(words) && words[searchIdx] == word
 }
 
+// Add a word to the filter list
+func (wl *WordList) SetFilterWord(word string) {
+	existingIdx := sort.SearchStrings(wl.FilterWords, word)
+	if !(existingIdx < len(wl.FilterWords) && wl.FilterWords[existingIdx] == word) {
+		wl.FilterWords = append(wl.FilterWords, word)
+		sort.Strings(wl.FilterWords)
+	}
+}
+
+// Check if given word is in the filter list.
+func (wl *WordList) HasFilterWord(word string) bool {
+	if len(wl.FilterWords) == 0 {
+		return false
+	}
+
+	sort.Strings(wl.FilterWords)
+	searchIdx := sort.SearchStrings(wl.FilterWords, word)
+
+	return searchIdx < len(wl.FilterWords) && wl.FilterWords[searchIdx] == word
+}
+
 // Apply WordList.FilterWords to the given list of words.
 // Returns a sorted list with the filter words removed.
-func (wl *WordList) ApplyWordFilters(words []string) []string {
+func (wl *WordList) FilterWordList(words []string) []string {
 	if len(words) == 0 {
 		return words
 	}
@@ -85,27 +106,6 @@ func (wl *WordList) ApplyWordFilters(words []string) []string {
 	sort.Strings(filteredList)
 
 	return filteredList
-}
-
-// Check if given word is in the filter list.
-func (wl *WordList) HasFilterWord(word string) bool {
-	if len(wl.FilterWords) == 0 {
-		return false
-	}
-
-	sort.Strings(wl.FilterWords)
-	searchIdx := sort.SearchStrings(wl.FilterWords, word)
-
-	return searchIdx < len(wl.FilterWords) && wl.FilterWords[searchIdx] == word
-}
-
-// Add a word to the filter list
-func (wl *WordList) SetFilterWord(word string) {
-	existingIdx := sort.SearchStrings(wl.FilterWords, word)
-	if !(existingIdx < len(wl.FilterWords) && wl.FilterWords[existingIdx] == word) {
-		wl.FilterWords = append(wl.FilterWords, word)
-		sort.Strings(wl.FilterWords)
-	}
 }
 
 // Returns a cached definition for the given word. If no cache found, fetches and caches the definition first.

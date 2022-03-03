@@ -48,8 +48,10 @@ func init() {
 
 // Parses a scanner generated from a word list file and returns a list of words
 func scanWordListFile(scannerValidList *bufio.Scanner, scannerInvalidList *bufio.Scanner) (wordList WordList) {
-	var validWordList []string
-	var invalidWordList []string
+	var (
+		validWordList []string
+		invalidWordList []string
+	)
 	wordList.Words = make(map[int][]string)
 	scannerValidList.Split(bufio.ScanLines)
 	scannerInvalidList.Split(bufio.ScanLines)

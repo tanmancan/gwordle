@@ -1,12 +1,15 @@
 package wengine
 
 import (
+	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/tanmancan/gwordle/v1/internal/dictionaryapi"
 )
 
 type fields struct {
-	Words map[int][]string
+	Words       map[int][]string
 	FilterWords []string
 }
 type args struct {
@@ -94,7 +97,7 @@ func TestWordList_GetRandomWord(t *testing.T) {
 		{
 			name: "Return filtered word with len 5",
 			fields: fields{
-				Words: wordList,
+				Words:       wordList,
 				FilterWords: filterFive,
 			},
 			args: args{
@@ -107,7 +110,7 @@ func TestWordList_GetRandomWord(t *testing.T) {
 		{
 			name: "Return filtered word with len 6",
 			fields: fields{
-				Words: wordList,
+				Words:       wordList,
 				FilterWords: filterSix,
 			},
 			args: args{
@@ -121,7 +124,7 @@ func TestWordList_GetRandomWord(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			wl := &WordList{
-				Words: tt.fields.Words,
+				Words:       tt.fields.Words,
 				FilterWords: tt.fields.FilterWords,
 			}
 			got := wl.GetRandomWord(tt.args.length)
@@ -213,6 +216,159 @@ func TestWordList_SetFilterWord(t *testing.T) {
 			wl.SetFilterWord(tt.args.word)
 			if got := wl.HasFilterWord(tt.args.word); !got {
 				t.Errorf("WordList.SetFilterWord() = %v, want %v", got, true)
+			}
+		})
+	}
+}
+
+func TestWordList_HasFilterWord(t *testing.T) {
+	type fields struct {
+		Words       map[int][]string
+		Definitions map[string]dictionaryapi.DictionaryApiDefinition
+		FilterWords []string
+	}
+	type args struct {
+		word string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "Has filter word",
+			fields: fields{
+				FilterWords: []string{
+					"one",
+					"trust",
+					"color",
+				},
+			},
+			args: args{
+				word: "trust",
+			},
+			want: true,
+		},
+		{
+			name: "Does not have filter word",
+			fields: fields{
+				FilterWords: []string{
+					"one",
+					"trust",
+				},
+			},
+			args: args{
+				word: "time",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			wl := &WordList{
+				FilterWords: tt.fields.FilterWords,
+			}
+			if got := wl.HasFilterWord(tt.args.word); got != tt.want {
+				t.Errorf("WordList.HasFilterWord() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestWordList_FilterWordList(t *testing.T) {
+	type fields struct {
+		Words       map[int][]string
+		Definitions map[string]dictionaryapi.DictionaryApiDefinition
+		FilterWords []string
+	}
+	type args struct {
+		words []string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []string
+	}{
+		{
+			name: "Correctly sorts word list",
+			fields: fields{
+				FilterWords: []string{
+					"fire",
+				},
+			},
+			args: args{
+				words: []string{
+					"zonk",
+					"just",
+					"apple",
+					"cow",
+				},
+			},
+			want: []string{
+				"apple",
+				"cow",
+				"just",
+				"zonk",
+			},
+		},
+		{
+			name: "Correctly filters word list",
+			fields: fields{
+				FilterWords: []string{
+					"fire",
+				},
+			},
+			args: args{
+				words: []string{
+					"zonk",
+					"just",
+					"fire",
+					"apple",
+					"cow",
+				},
+			},
+			want: []string{
+				"apple",
+				"cow",
+				"just",
+				"zonk",
+			},
+		},
+		{
+			name: "Correctly filters multiple words",
+			fields: fields{
+				FilterWords: []string{
+					"fire",
+					"apple",
+					"zonk",
+				},
+			},
+			args: args{
+				words: []string{
+					"zonk",
+					"just",
+					"fire",
+					"apple",
+					"cow",
+				},
+			},
+			want: []string{
+				"cow",
+				"just",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			wl := &WordList{
+				Words:       tt.fields.Words,
+				Definitions: tt.fields.Definitions,
+				FilterWords: tt.fields.FilterWords,
+			}
+			if got := wl.FilterWordList(tt.args.words); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("WordList.FilterWordList() = %v, want %v", got, tt.want)
 			}
 		})
 	}
