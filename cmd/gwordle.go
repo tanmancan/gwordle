@@ -4,16 +4,19 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/tanmancan/gwordle/v1/internal/cli"
 	"github.com/tanmancan/gwordle/v1/internal/config"
 	"github.com/tanmancan/gwordle/v1/internal/wengine"
 )
 
 func main() {
-	var results []wengine.ValidationResult
-	secret := wengine.WordListCache.GetRandomWord(config.GlobalConfig.UserConfig.WordLength)
-	userInput(secret, config.GlobalConfig.UserConfig.MaxTries, &results)
-}
+	game := cli.GameState{}
+	game.InitGame()
 
+	// var results []wengine.ValidationResult
+	// secret := wengine.WordListCache.GetRandomWord(config.GlobalConfig.UserConfig.WordLength)
+	// userInput(secret, config.GlobalConfig.UserConfig.MaxTries, &results)
+}
 // Main game loop for the CLI application.
 func userInput(secret string, tries int, results *[]wengine.ValidationResult) {
 	fmt.Printf("You have %d tries\n", tries)

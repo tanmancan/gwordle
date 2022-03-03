@@ -40,9 +40,22 @@ type DictionaryApiResponseError struct {
 	Resolution string
 }
 
+type DictionaryApiRequest interface {
+	GetWord() string
+	BuildDictionaryRequest() (*http.Request)
+}
+
+type GetWordDefinitionRequest struct {
+	Word string
+}
+
+func (r GetWordDefinitionRequest) GetWord() string {
+	return r.Word
+}
 
 // Build a request for api.dictionaryapi.dev for the provided word.
-func BuildDictionaryRequest(word string) (*http.Request) {
+func (r GetWordDefinitionRequest) BuildDictionaryRequest() (*http.Request) {
+	word := r.GetWord()
 	endpoint := fmt.Sprintf(config.GlobalConfig.DictionaryApiEndpoint, word)
 	request, err := http.NewRequest("GET", endpoint, nil)
 
@@ -79,7 +92,8 @@ func parseDictionaryResponse(response *http.Response) (apiResponse DictionaryApi
 }
 
 // Get the definition for the provided word using api.dictionaryapi.dev
-func GetWordDefinition(request *http.Request) DictionaryApiResponse {
+func GetWordDefinition(r DictionaryApiRequest) DictionaryApiResponse {
+	request := r.BuildDictionaryRequest()
 	client := http.Client{}
 	response, err := client.Do(request)
 

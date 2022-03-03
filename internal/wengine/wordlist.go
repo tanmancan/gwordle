@@ -36,8 +36,6 @@ func (wl *WordList) GetRandomWord(length int) string {
 	wl.Words[length] = words
 	wordCount := len(words)
 
-	fmt.Println(words, wordCount, wordsPreFilter)
-
 	rand.Seed(time.Now().UnixNano())
 	randomIdx := 0
 	if (wordCount > 1) {
@@ -60,7 +58,6 @@ func (wl *WordList) GetRandomWord(length int) string {
 func (wl *WordList) HasWord(word string) bool {
 	length := len(word)
 	words := wl.Words[length]
-
 	sort.Strings(words)
 	searchIdx := sort.SearchStrings(words, word)
 
@@ -114,7 +111,9 @@ func (wl *WordList) GetDefinition(word string) (*dictionaryapi.DictionaryApiDefi
 		return &def
 	}
 
-	request := dictionaryapi.BuildDictionaryRequest(word)
+	request := dictionaryapi.GetWordDefinitionRequest{
+		Word: word,
+	}
 	apiResponse := dictionaryapi.GetWordDefinition(request)
 
 	if (apiResponse.Error != dictionaryapi.DictionaryApiResponseError{}) {

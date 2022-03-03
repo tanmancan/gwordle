@@ -16,17 +16,42 @@ var mockSuccessResponse string
 //go:embed test-mocks/dictionaryapimocks/error-response.json
 var mockErrorResponse string
 
+type TestGetWordDefinitionRequest struct {
+	TestServer *httptest.Server
+}
+
+func (r TestGetWordDefinitionRequest) GetTestServer() *httptest.Server {
+	return r.TestServer
+}
+
+func (r TestGetWordDefinitionRequest) GetWord() string {
+	return "Test"
+}
+
+// Build a request for api.dictionaryapi.dev for the provided word.
+func (r TestGetWordDefinitionRequest) BuildDictionaryRequest() (*http.Request) {
+	ts := r.GetTestServer()
+	request, err := http.NewRequest("GET", ts.URL, nil)
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return request
+}
+
+
+
 func Test_GetWordDefinition(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func (w http.ResponseWriter, r *http.Request)  {
 		fmt.Fprintln(w, string(mockSuccessResponse))
 	}))
 	defer testServer.Close()
-	request, err := http.NewRequest("GET", testServer.URL, nil)
-	if err != nil {
-		log.Fatalln(err)
+	request := TestGetWordDefinitionRequest{
+		TestServer: testServer,
 	}
 	type args struct {
-		request *http.Request
+		request DictionaryApiRequest
 	}
 	tests := []struct {
 		name string
@@ -92,12 +117,11 @@ func Test_GetWordDefinition_errorResponse_statusNotFound(t *testing.T) {
 		fmt.Fprintln(w, string(mockErrorResponse))
 	}))
 	defer testServer.Close()
-	request, err := http.NewRequest("GET", testServer.URL, nil)
-	if err != nil {
-		log.Fatalln(err)
+	request := TestGetWordDefinitionRequest{
+		TestServer: testServer,
 	}
 	type args struct {
-		request *http.Request
+		request DictionaryApiRequest
 	}
 	tests := []struct {
 		name string
@@ -133,12 +157,11 @@ func Test_GetWordDefinition_errorResponse_statusUnknown(t *testing.T) {
 		fmt.Fprintln(w, "Oops!")
 	}))
 	defer testServer.Close()
-	request, err := http.NewRequest("GET", testServer.URL, nil)
-	if err != nil {
-		log.Fatalln(err)
+	request := TestGetWordDefinitionRequest{
+		TestServer: testServer,
 	}
 	type args struct {
-		request *http.Request
+		request DictionaryApiRequest
 	}
 	tests := []struct {
 		name string
