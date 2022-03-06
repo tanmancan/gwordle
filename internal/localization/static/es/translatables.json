@@ -1,0 +1,13 @@
+{
+  "commands": {
+    "help": "/ayuda"
+  },
+  "endRound": {
+    "winCondition": {
+      "try": "tratar"
+    },
+    "loseCondition": {
+      "loseMessage": "Tú pierdes. La palabra es: %s"
+    }
+  }
+}

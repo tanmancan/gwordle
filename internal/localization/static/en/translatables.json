@@ -1,0 +1,33 @@
+{
+  "commands": {
+    "help": "help",
+    "helpDesc": "Show the help text.",
+    "score": "score",
+    "scoreDesc": "Print the current game score.",
+    "new": "new",
+    "newDesc": "Forfeit the current game and start a new game.",
+    "hide": "hide",
+    "hideDesc": "Hide the game to prevent over the shoulder snooping.",
+    "exit": "exit",
+    "exitDesc": "Exit the game.",
+    "invalidCommand": "Invalid command: %s",
+    "helpTextIntro": "Available commands:"
+  },
+  "userPrompt": {
+    "Instructions": "Enter a guess word, or multiple words separate by space.\nType /%s for more option.",
+    "remainingAttempts": "You have %d tries: "
+  },
+  "scoreCard": {
+    "totalWin": "Total wins: %d",
+    "totalLoss": "Total losses: %d"
+  },
+  "validation": {
+    "InvalidWord": "Invalid word: %s"
+  },
+  "endRound": {
+    "try": "try",
+    "tries": "tries",
+    "winMessage": "You have guessed the correct word (%s) in %v %s!\n",
+    "loseMessage": "You lose. The word is: %s"
+  }
+}
