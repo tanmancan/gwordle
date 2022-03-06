@@ -33,7 +33,6 @@ func (wl *WordList) GetRandomWord(length int) string {
 	}
 
 	words := wl.FilterWordList(wordsPreFilter)
-	wl.Words[length] = words
 	wordCount := len(words)
 
 	rand.Seed(time.Now().UnixNano())
