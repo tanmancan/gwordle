@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	_ "embed"
+
 	"github.com/tanmancan/gwordle/v1/internal/config"
 	"github.com/tanmancan/gwordle/v1/internal/dictionaryapi"
 	"github.com/tanmancan/gwordle/v1/internal/localization"
@@ -49,7 +51,7 @@ func (gs *GameState) GameLoop() {
 	completed := false
 	for !completed {
 		gs.RenderResults()
-		if gs.CurrentGame.Attempts == 1 {
+		if gs.CurrentGame.Attempts == 0 {
 			completed = true
 			gs.LoseRound()
 		}
@@ -76,6 +78,8 @@ func (gs *GameState) GetUserInput() string {
 		log.Fatalln(err)
 	}
 
+	guess = strings.ToLower(guess)
+
 	if guess[0:1] == "/" {
 		gs.ParseUserCommand(guess)
 		return gs.GetUserInput()
@@ -95,6 +99,8 @@ func (gs *GameState) ParseUserCommand(ucmd string) {
 		gs.ShowHelp()
 	case cmds.Exit:
 		gs.ExitGame()
+	case cmds.Hide:
+		hideGame()
 	default:
 		renderTextLn(cmds.InvalidCommand, ucmd)
 		gs.ShowHelp()
@@ -202,6 +208,12 @@ func (gs *GameState) RenderResults() {
 
 		fmt.Print("\n")
 	}
+	for i := 0; i < gs.CurrentGame.Attempts; i++ {
+		for i := 0; i < config.GlobalConfig.UserConfig.WordLength; i++ {
+			fmt.Print("_ ")
+		}
+		fmt.Print("\n")
+	}
 	fmt.Print("\n")
 }
 
@@ -235,4 +247,35 @@ func renderText(format string, replacements ...interface{}) {
 func renderTextLn(format string, replacements ...interface{}) {
 	f := fmt.Sprintln(format)
 	fmt.Printf(f, replacements...)
+}
+
+//go:embed static/hide
+var hideTxt string
+func hideGame() {
+	renderTextLn(hideTxt)
+	renderTextLn(localization.AppTranslatable.HideRound.Instructions)
+	hidePrompt()
+}
+
+func hidePrompt() string {
+	hideRound := localization.AppTranslatable.HideRound
+	var input string
+	_, err := fmt.Scanln(&input)
+	if err != nil {
+		renderTextLn(hideRound.InvalidInput)
+		return hidePrompt()
+	}
+
+	switch strings.ToLower(input) {
+	case strings.ToLower(hideRound.Return):
+		return ""
+	case strings.ToLower(hideRound.Exit):
+		renderTextLn(hideRound.Exit)
+		os.Exit(0)
+	default:
+		renderTextLn("%s %s", hideRound.InvalidInput, hideRound.Instructions)
+		hidePrompt()
+	}
+
+	return input
 }

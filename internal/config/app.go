@@ -6,18 +6,18 @@ import (
 	"golang.org/x/text/language"
 )
 
-type AppConfig struct {
+type appConfig struct {
 	Locale language.Tag
-	UserConfig UserConfig
+	UserConfig userConfig
 	DictionaryApiEndpoint string
 }
 
-type UserConfig struct {
+type userConfig struct {
 	MaxTries int // The maximum number of guesses allowed in a game.
 	WordLength int // The length of the guess word.
 }
 
-var GlobalConfig AppConfig
+var GlobalConfig appConfig
 
 func init() {
 	GlobalConfig.Locale = language.English

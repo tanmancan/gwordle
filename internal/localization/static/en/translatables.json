@@ -29,5 +29,11 @@
     "tries": "tries",
     "winMessage": "You have guessed the correct word (%s) in %v %s!\n",
     "loseMessage": "You lose. The word is: %s"
+  },
+  "hideRound": {
+    "return": "return",
+    "exit": "exit",
+    "instructions": "Type RETURN to go back to previous application or EXIT to end.",
+    "invalidInput": "Invalid input. Please try again."
   }
 }

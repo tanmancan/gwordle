@@ -43,6 +43,12 @@ type Translatables struct {
 		WinMessage string
 		LoseMessage string
 	}
+	HideRound struct {
+		Return string
+		Exit string
+		Instructions string
+		InvalidInput string
+	}
 }
 
 var (
