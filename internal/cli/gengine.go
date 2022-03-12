@@ -58,6 +58,7 @@ func (gs *GameState) GameLoop() {
 		guess := gs.GetUserInput()
 		completed = gs.ValidateGuessWord(guess)
 	}
+	gs.RenderResults()
 	gs.WinRound()
 }
 
@@ -117,9 +118,10 @@ func (gs *GameState) ValidateGuessWord(word string) bool {
 		if response.Response != nil && response.Response[0].Word == word {
 			missingPath := "internal/cli/static/missing"
 			wengine.WordListFileWriter(missingPath, word)
+		} else {
+			renderTextLn(localization.AppTranslatable.Validation.InvalidWord, word)
+			return false
 		}
-		renderTextLn(localization.AppTranslatable.Validation.InvalidWord, word)
-		return false
 	}
 
 	result, err := wengine.ValidateWord(word, gs.CurrentGame.SecretWord)
@@ -155,7 +157,7 @@ func (gs *GameState) WinRound() {
 	if (totalTries == 1) {
 		triesLabel = labelsEndRound.Try
 	}
-	renderTextLn(labelsEndRound.WinMessage, gs.CurrentGame.SecretWord, gs.CurrentGame.Attempts, triesLabel)
+	renderTextLn(labelsEndRound.WinMessage, gs.CurrentGame.SecretWord, totalTries, triesLabel)
 	wengine.WordListCache.SetFilterWord(gs.CurrentGame.SecretWord)
 	gs.CurrentGame.Win = true
 	gs.PastGames = append(gs.PastGames, gs.CurrentGame)
