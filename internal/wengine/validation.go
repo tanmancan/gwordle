@@ -7,12 +7,12 @@ import (
 )
 
 // Determines if a character is in a valid position, invalid position, or is not a valid guess.
-type CharValidationStatus = int64
+type CharValidationStatus = string
 
 const (
-	ValidPosition CharValidationStatus = iota // The correct character and position
-	InvalidPosition // Correct character but invalid position
-	InvalidCharacter // Invalid character guessed
+	ValidPosition CharValidationStatus = "VALID_POS" // The correct character and position
+	InvalidPosition = "INVALID_POS" // Correct character but invalid position
+	InvalidCharacter = "INVALID_CHAR" // Invalid character guessed
 )
 
 // Compare the individual characters of the guess word to the secret word.
