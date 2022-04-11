@@ -70,7 +70,6 @@ func (mc CliMemoryCard) SaveGame(s *gengine.SaveState) {
 		log.Println(err)
 		return
 	}
-	fmt.Println(string(b))
 	f.Write(b)
 }
 

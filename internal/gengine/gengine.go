@@ -1,7 +1,6 @@
 package gengine
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/tanmancan/gwordle/v1/internal/config"
@@ -97,7 +96,6 @@ func (gs *GameState) InitGame(up UserPrompt, r Renderer, mc MemoryCard) {
 
 // Main game loop that validates a users input and decides the outcome
 func (gs *GameState) GameLoop() {
-	fmt.Println(gs.SaveState.CurrentGame.SecretWord)
 	completed := false
 	for !completed {
 		gs.Renderer.RenderValidationResults(gs)
