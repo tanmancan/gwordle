@@ -1,6 +1,7 @@
 package gengine
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/tanmancan/gwordle/v1/internal/config"
@@ -9,6 +10,7 @@ import (
 	"github.com/tanmancan/gwordle/v1/internal/wengine"
 )
 
+// Used for user interaction and dialog.
 type UserPrompt interface {
 	// Get user input for a guess word or a help command.
 	GetUserInput(gs *GameState) string
@@ -22,6 +24,7 @@ type UserPrompt interface {
 	ExitGameMessage(gs *GameState)
 }
 
+// Used to display messages regarding the game state.
 type Renderer interface {
 	// Renders the result of the word validation for the current round.
 	RenderValidationResults(gs *GameState)
@@ -33,24 +36,41 @@ type Renderer interface {
 	RenderTextLn(format string, replacements ...interface{})
 }
 
+// Allows for saving and loading games.
+type MemoryCard interface {
+	// Loads an existing game.
+	LoadGame() *SaveState
+	// Save the game.
+	SaveGame(s *SaveState)
+}
+
+// A single game round.
 type GameRound struct {
-	Attempts int // Number of attemp remaining. Initial value is determined by AppConfig.UserConfig.MaxTries.
+	RemainingAttempts int // Number of attemp remaining. Initial value is determined by AppConfig.UserConfig.MaxTries.
 	Results []wengine.ValidationResult // Validation result for each guess word.
 	SecretWord string // Current secret word.
 	Win bool // If the current round was won.
 }
 
+// The game state.
 type GameState struct {
-	CurrentGame GameRound
-	PastGames []GameRound
-	GuessedWords []string
+	SaveState SaveState
 	UserPrompt UserPrompt
 	Renderer Renderer
+	MemoryCard MemoryCard
+}
+
+// Gamestate that can be saved and loaded
+type SaveState struct {
+	// Current round
+	CurrentGame GameRound
+	// Past rounds
+	PastGames []GameRound
 }
 
 // Get the total number of wins and losses
 func (gs *GameState) GetTotalWinLossCount() (win int, loss int) {
-	for _, round := range gs.PastGames {
+	for _, round := range gs.SaveState.PastGames {
 		if round.Win == true {
 			win++
 		} else {
@@ -62,19 +82,26 @@ func (gs *GameState) GetTotalWinLossCount() (win int, loss int) {
 }
 
 // Initialize and begins the game loop
-func (gs *GameState) InitGame(up UserPrompt, r Renderer) {
+func (gs *GameState) InitGame(up UserPrompt, r Renderer, mc MemoryCard) {
 	gs.UserPrompt = up
 	gs.Renderer = r
-	gs.NewRound()
+	gs.MemoryCard = mc
+	prev := mc.LoadGame()
+	if prev != nil {
+		gs.SaveState = *prev
+	} else {
+		gs.NewRound()
+	}
 	gs.GameLoop()
 }
 
 // Main game loop that validates a users input and decides the outcome
 func (gs *GameState) GameLoop() {
+	fmt.Println(gs.SaveState.CurrentGame.SecretWord)
 	completed := false
 	for !completed {
 		gs.Renderer.RenderValidationResults(gs)
-		if gs.CurrentGame.Attempts == 0 {
+		if gs.SaveState.CurrentGame.RemainingAttempts == 0 {
 			completed = true
 			gs.LoseRound()
 		}
@@ -83,11 +110,12 @@ func (gs *GameState) GameLoop() {
 	}
 	gs.Renderer.RenderValidationResults(gs)
 	gs.WinRound()
+	gs.GameLoop()
 }
 
 // Exit the game
 func (gs *GameState) ExitGame() {
-	// TODO: save and exit
+	gs.MemoryCard.SaveGame(&gs.SaveState)
 	gs.UserPrompt.ExitGameMessage(gs)
 	os.Exit(0)
 }
@@ -108,15 +136,15 @@ func (gs *GameState) ValidateGuessWord(word string) bool {
 		}
 	}
 
-	result, err := wengine.ValidateWord(word, gs.CurrentGame.SecretWord)
+	result, err := wengine.ValidateWord(word, gs.SaveState.CurrentGame.SecretWord)
 
 	if err != nil {
 		gs.Renderer.RenderTextLn("%v", err)
 		return false
 	}
 
-	gs.CurrentGame.Attempts -= 1
-	gs.CurrentGame.Results = append(gs.CurrentGame.Results, result)
+	gs.SaveState.CurrentGame.RemainingAttempts -= 1
+	gs.SaveState.CurrentGame.Results = append(gs.SaveState.CurrentGame.Results, result)
 
 	if result.Match == false {
 		return false
@@ -127,18 +155,18 @@ func (gs *GameState) ValidateGuessWord(word string) bool {
 
 // Start a new round with a new guess word
 func (gs *GameState) NewRound() {
-	gs.CurrentGame.SecretWord = wengine.WordListCache.GetRandomWord(config.GlobalConfig.UserConfig.WordLength)
-	gs.CurrentGame.Attempts = config.GlobalConfig.UserConfig.MaxTries
-	gs.CurrentGame.Results = nil
-	gs.CurrentGame.Win = false
+	gs.SaveState.CurrentGame.SecretWord = wengine.WordListCache.GetRandomWord(config.GlobalConfig.UserConfig.WordLength)
+	gs.SaveState.CurrentGame.RemainingAttempts = config.GlobalConfig.UserConfig.MaxTries
+	gs.SaveState.CurrentGame.Results = nil
+	gs.SaveState.CurrentGame.Win = false
 }
 
 // Set win condition for the current round
 func (gs *GameState) WinRound() {
 	gs.UserPrompt.WinRoundMessage(gs)
-	wengine.WordListCache.SetFilterWord(gs.CurrentGame.SecretWord)
-	gs.CurrentGame.Win = true
-	gs.PastGames = append(gs.PastGames, gs.CurrentGame)
+	wengine.WordListCache.SetFilterWord(gs.SaveState.CurrentGame.SecretWord)
+	gs.SaveState.CurrentGame.Win = true
+	gs.SaveState.PastGames = append(gs.SaveState.PastGames, gs.SaveState.CurrentGame)
 	gs.Renderer.RenderGameScore(gs)
 	gs.NewRound()
 }
@@ -146,8 +174,8 @@ func (gs *GameState) WinRound() {
 // Set lose condition for the current round.
 func (gs *GameState) LoseRound() {
 	gs.UserPrompt.LoseRoundMessage(gs)
-	wengine.WordListCache.SetFilterWord(gs.CurrentGame.SecretWord)
-	gs.PastGames = append(gs.PastGames, gs.CurrentGame)
+	wengine.WordListCache.SetFilterWord(gs.SaveState.CurrentGame.SecretWord)
+	gs.SaveState.PastGames = append(gs.SaveState.PastGames, gs.SaveState.CurrentGame)
 	gs.Renderer.RenderGameScore(gs)
 	gs.NewRound()
 }

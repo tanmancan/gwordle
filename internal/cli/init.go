@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -14,9 +15,64 @@ import (
 	"github.com/tanmancan/gwordle/v1/internal/wengine"
 )
 
+type CliMemoryCard struct {}
+
 type CliUserPrompt struct {}
 
 type CliRenderer struct {}
+
+// Get the save filepath in the user's home directory.
+// Savefile are versioned. Old saves may not work with newer versions.
+func (mc CliMemoryCard) GetSaveFilePath() (string, error) {
+	hdir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	sdir := fmt.Sprintf("%s/gwordle/", hdir)
+
+	if err := os.MkdirAll(sdir, os.ModePerm); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%ssave-%s.json", sdir, config.GlobalConfig.Version), nil
+}
+
+// Load game from file.
+func (mc CliMemoryCard) LoadGame() *gengine.SaveState {
+	sf, err := mc.GetSaveFilePath()
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	data, err := os.ReadFile(sf)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	s := &gengine.SaveState{}
+	json.Unmarshal(data, &s)
+	return s
+}
+
+// Save game to file.
+func (mc CliMemoryCard) SaveGame(s *gengine.SaveState) {
+	sf, err := mc.GetSaveFilePath()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	f, err := os.OpenFile(sf, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	b, err := json.Marshal(s)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	fmt.Println(string(b))
+	f.Write(b)
+}
 
 //go:embed static/hide
 var hideBlock string
@@ -55,7 +111,7 @@ func (up CliUserPrompt) HidePrompt(gs *gengine.GameState) string {
 	// Get user input for a guess word or a help command.
 func (up CliUserPrompt) GetUserInput(gs *gengine.GameState) string {
 	gs.Renderer.RenderTextLn(localization.AppTranslatable.UserPrompt.Instructions, localization.AppTranslatable.Commands.Help)
-	gs.Renderer.RenderText(localization.AppTranslatable.UserPrompt.RemainingAttempts, gs.CurrentGame.Attempts);
+	gs.Renderer.RenderText(localization.AppTranslatable.UserPrompt.RemainingAttempts, gs.SaveState.CurrentGame.RemainingAttempts);
 	var guess string
 	_, err := fmt.Scan(&guess)
 
@@ -106,7 +162,7 @@ func (up CliUserPrompt) DisplayHelpText(gs *gengine.GameState) {
 // Display a message when user loses a round.
 func (up CliUserPrompt) LoseRoundMessage(gs *gengine.GameState) {
 	labelsEndRound := localization.AppTranslatable.EndRound
-	lMsg := fmt.Sprintf(labelsEndRound.LoseMessage, strings.ToUpper(gs.CurrentGame.SecretWord))
+	lMsg := fmt.Sprintf(labelsEndRound.LoseMessage, strings.ToUpper(gs.SaveState.CurrentGame.SecretWord))
 	msg := fmt.Sprintf("| %s |", lMsg)
 	dWidth := len(msg)
 	hRuleSlice := make([]string, dWidth)
@@ -121,11 +177,11 @@ func (up CliUserPrompt) LoseRoundMessage(gs *gengine.GameState) {
 func (up CliUserPrompt) WinRoundMessage(gs *gengine.GameState) {
 	labelsEndRound := localization.AppTranslatable.EndRound
 	triesLabel := labelsEndRound.Tries
-	totalTries := config.GlobalConfig.UserConfig.MaxTries - gs.CurrentGame.Attempts
+	totalTries := config.GlobalConfig.UserConfig.MaxTries - gs.SaveState.CurrentGame.RemainingAttempts
 	if (totalTries == 1) {
 		triesLabel = labelsEndRound.Try
 	}
-	gs.Renderer.RenderTextLn(labelsEndRound.WinMessage, gs.CurrentGame.SecretWord, totalTries, triesLabel)
+	gs.Renderer.RenderTextLn(labelsEndRound.WinMessage, gs.SaveState.CurrentGame.SecretWord, totalTries, triesLabel)
 }
 
 // Display a message when a user exists the game.
@@ -140,7 +196,7 @@ func (r CliRenderer) RenderValidationResults(gs *gengine.GameState) {
 	colorGreen := "\033[32m"
 	colorYellow := "\033[33m"
 	fmt.Print("\n")
-	for _, result := range gs.CurrentGame.Results {
+	for _, result := range gs.SaveState.CurrentGame.Results {
 		for _, c := range result.Chars {
 			var color string
 			char := c.Char
@@ -160,7 +216,7 @@ func (r CliRenderer) RenderValidationResults(gs *gengine.GameState) {
 
 		fmt.Print("\n")
 	}
-	for i := 0; i < gs.CurrentGame.Attempts; i++ {
+	for i := 0; i < gs.SaveState.CurrentGame.RemainingAttempts; i++ {
 		for i := 0; i < config.GlobalConfig.UserConfig.WordLength; i++ {
 			fmt.Print("_ ")
 		}
@@ -190,7 +246,7 @@ func (r CliRenderer) RenderTextLn(format string, replacements ...interface{}) {
 func InitCliGame() {
 	up := CliUserPrompt{}
 	r := CliRenderer{}
+	mc := CliMemoryCard{}
 	game := gengine.GameState{}
-	game.InitGame(up, r)
+	game.InitGame(up, r, mc)
 }
-
